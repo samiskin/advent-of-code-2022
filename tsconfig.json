@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "system",
+    "noImplicitAny": false,
+    "removeComments": true,
+    "lib": ["ESNext", "dom"]
+  },
+  "include": ["ts/**/*"]
+}
