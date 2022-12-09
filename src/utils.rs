@@ -375,6 +375,24 @@ impl<T> Grid<T> {
         }
         return neighbors;
     }
+    pub fn neighbors_walk(&self, sx: usize, sy: usize) -> [Vec<(usize, usize)>; 4] {
+        let dirs: [(isize, isize); 4] = [
+            (0, 1),
+            (1, 0),
+            (0, -1),
+            (-1, 0),
+        ];
+        let mut neighbors = [vec![], vec![], vec![], vec![]];
+        for (i, (dx, dy)) in dirs.iter().enumerate() {
+            let (mut x, mut y) = (sx as isize + dx, sy as isize + dy);
+            while self.contains(x, y) {
+                neighbors[i].push((x as usize, y as usize));
+                x += dx;
+                y += dy;
+            }
+        }
+        return neighbors;
+    }
     pub fn neighbors_diag(&self, x: usize, y: usize) -> Vec<(usize, usize)> {
         let mut neighbors = self.neighbors(x, y);
         if x > 0 && y > 0 {

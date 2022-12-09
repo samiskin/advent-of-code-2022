@@ -1,4 +1,5 @@
-export const _ = require('lodash');
+import * as _ from 'lodash';
+export const objKeys = <K extends string>(rec: Record<K, unknown>) => Object.keys(rec) as Array<K>
 
 type FixedLengthArray<N extends number, T, _Counter extends any[] = []> =
   _Counter['length'] extends N
@@ -99,16 +100,26 @@ export const print = (col: string, ...args: unknown[]) => {
 }
 
 /** hashes [x, y] into `{x} {y}`*/
-type HashedCoord = `${number} ${number}`;
+export type HashedCoord = `${number} ${number}`;
 export const hash = ([x, y]: [number, number]) => `${x} ${y}` as const;
 
-export const strToGrid = (arr: string) =>
+export const strToGrid = (arr: string): Record<HashedCoord, string> =>
   arr.trim().split('\n').reduce((map, line, y) => {
     line.split('').forEach((c, x) => {
       map[hash([x, y])] = c;
     });
     return map;
   }, {})
+
+export const inBounds = ([x, y]: [number, number], x_bounds: number | [number, number], y_bounds: number | [number, number]) => {
+  if (typeof x_bounds == 'number') {
+    x_bounds = [0, x_bounds]
+  }
+  if (typeof y_bounds == 'number') {
+    y_bounds = [0, y_bounds]
+  }
+  return x >= x_bounds[0] && x < x_bounds[1] && y >= y_bounds[0] && y < y_bounds[1];
+}
 
 /** Prints a grid of `{x} {y}`: {character} to the console */
 export const printGrid = <T>(map: Record<HashedCoord, T>, valOverrides = {}, posOverrides = {}) => {
@@ -254,12 +265,17 @@ export const getMapPoints = (map: Record<string, unknown>): Array<[number, numbe
 
 /** Returns [maxX - minX, maxY - minY] for a grid of coordinates */
 export const getDimensions = (map: Record<string, unknown>) => {
+  const [[min_x, max_x], [min_y, max_y]] = getBounds(map);
+  return [max_x - min_x + 1, max_y - min_y + 1];
+}
+
+export const getBounds = (map: Record<string, unknown>): [[number, number], [number, number]] => {
   const points = getMapPoints(map);
   const min_x = Math.min(...points.map(([x, _y]) => x));
   const max_x = Math.max(...points.map(([x, _y]) => x));
   const min_y = Math.min(...points.map(([_x, y]) => y));
   const max_y = Math.max(...points.map(([_x, y]) => y));
-  return [max_x - min_x, max_y - min_y];
+  return [[min_x, max_x], [min_y, max_y]];
 }
 
 /** Element-wise addition of two positions */
