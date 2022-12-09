@@ -327,6 +327,24 @@ where
             T::default(),
         )
     }
+
+    pub fn flip_x(&self) -> Grid<T> {
+        Grid::from_points(
+            self.iter()
+                .map(|((x, y), t)| ((-(x as i32), y as i32), *t))
+                .collect(),
+            T::default(),
+        )
+    }
+
+    pub fn flip_y(&self) -> Grid<T> {
+        Grid::from_points(
+            self.iter()
+                .map(|((x, y), t)| ((x as i32, -(y as i32)), *t))
+                .collect(),
+            T::default(),
+        )
+    }
 }
 
 #[allow(dead_code)]

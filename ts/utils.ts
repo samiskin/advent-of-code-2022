@@ -16,6 +16,9 @@ export const lt = (a: any, b: any) => a < b;
 export const mid = (a: number, b: number) => ((b - a) / 2) + a;
 export const midf = (...args: Parameters<typeof mid>) => Math.floor(mid(...args));
 
+export const repeat = <T, N extends number>(val: T, size: N): FixedLengthArray<N, T>   =>
+  Array.from("x".repeat(size)).map(() => _.cloneDeep(val)) as any
+
 /** Returns an array of numbers from 0 to <num>, optionally skipping the first <skip> numbers */
 export const range = (num: number, skip: number = 0) =>
   Array.from("x".repeat(num))
