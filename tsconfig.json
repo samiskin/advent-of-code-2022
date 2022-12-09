@@ -3,7 +3,9 @@
     "module": "system",
     "noImplicitAny": false,
     "removeComments": true,
-    "lib": ["ESNext", "dom"]
+    "lib": ["ES2021", "dom"],
+    "target": "es5",
+    "outDir": "dist"
   },
-  "include": ["ts/day7.ts"]
+  "include": ["ts/day8.ts", "ts/utils.ts"]
 }
