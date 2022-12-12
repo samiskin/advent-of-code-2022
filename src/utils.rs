@@ -248,7 +248,7 @@ where
             graph.add_node(node);
             for (nx, ny) in self.neighbors(x, y) {
                 let nt = self.get(nx, ny);
-                graph.add_edge(node, ((nx, ny), *nt));
+                graph.add_edge(node, ((nx, ny), *nt), 1);
             }
         }
         graph
@@ -259,7 +259,8 @@ pub struct Graph<T>
 where
     T: Eq + Hash + Copy,
 {
-    edges: HashMap<T, HashSet<T>>,
+    nodes: HashMap<T, HashSet<T>>,
+    edges: HashMap<(T, T), u64>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -295,50 +296,47 @@ where
 {
     pub fn new() -> Graph<T> {
         Graph {
+            nodes: HashMap::new(),
             edges: HashMap::new(),
         }
     }
 
     pub fn add_node(&mut self, key: T) {
-        self.edges.insert(key, HashSet::new());
+        self.nodes.insert(key, HashSet::new());
     }
 
-    pub fn add_edge(&mut self, a: T, b: T) {
-        let edges_a = self.edges.entry(a).or_insert(HashSet::new());
-        edges_a.insert(b);
-
-        let edges_b = self.edges.entry(b).or_insert(HashSet::new());
-        edges_b.insert(a);
+    pub fn add_edge(&mut self, a: T, b: T, cost: u64) {
+        self.add_edge_uni(a, b, cost);
+        self.add_edge_uni(b, a, cost);
     }
 
-    pub fn add_edge_uni(&mut self, a: T, b: T) {
-        let edges_a = self.edges.entry(a).or_insert(HashSet::new());
-        edges_a.insert(b);
+    pub fn add_edge_uni(&mut self, a: T, b: T, cost: u64) {
+        let nodes_a = self.nodes.entry(a).or_insert(HashSet::new());
+        nodes_a.insert(b);
+        let edges_a = self.edges.entry((a, b)).or_insert(cost);
+        *edges_a = cost;
     }
 
-    pub fn remove_edge(&mut self, a: &T, b: &T) {
-        if let Some(edges_a) = self.edges.get_mut(a) {
-            edges_a.remove(b);
+    pub fn remove_edge(&mut self, a: T, b: T) {
+        self.remove_edge_uni(a, b);
+        self.remove_edge_uni(b, a);
+    }
+
+    pub fn remove_edge_uni(&mut self, a: T, b: T) {
+        if let Some(nodes_a) = self.nodes.get_mut(&a) {
+            nodes_a.remove(&b);
         };
-        if let Some(edges_b) = self.edges.get_mut(b) {
-            edges_b.remove(a);
-        };
-    }
-
-    pub fn remove_edge_uni(&mut self, a: &T, b: &T) {
-        if let Some(edges_a) = self.edges.get_mut(a) {
-            edges_a.remove(b);
-        };
+        self.edges.remove(&(a, b));
     }
 
     pub fn neighbors(&self, key: &T) -> Option<&HashSet<T>> {
-        if !self.edges.contains_key(key) {
+        if !self.nodes.contains_key(key) {
             return None;
         }
-        return Some(&self.edges.get(key).unwrap());
+        return Some(&self.nodes.get(key).unwrap());
     }
 
-    pub fn get_shortest_path_length(&self, start: T, end: T) -> Option<u64> {
+    pub fn get_shortest_path_cost(&self, start: T, end: T) -> Option<u64> {
         let mut heap = BinaryHeap::new();
         let mut seen = HashSet::new();
         heap.push(DijkstraState {
@@ -355,8 +353,9 @@ where
             for n in self.neighbors(node).unwrap() {
                 if !seen.contains(n) {
                     seen.insert(*n);
+                    let edge_cost = self.edges.get(&(*node, *n)).unwrap();
                     heap.push(DijkstraState {
-                        cost: cost + 1,
+                        cost: cost + edge_cost,
                         node: &n,
                     });
                 }
@@ -372,11 +371,11 @@ where
     T: Eq + Hash + Copy + fmt::Debug + Ord,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut sorted_keys = Vec::from_iter(self.edges.keys().map(|k| *k));
+        let mut sorted_keys = Vec::from_iter(self.nodes.keys().map(|k| *k));
         sorted_keys.sort();
         for key in sorted_keys {
             let mut sorted_edges =
-                Vec::from_iter(self.edges.get(&key).unwrap().into_iter().map(|t| *t));
+                Vec::from_iter(self.nodes.get(&key).unwrap().into_iter().map(|t| *t));
             sorted_edges.sort();
             write!(f, "\n\x1b[31m{:?}\x1b[0m -> {:?}", key, sorted_edges).unwrap();
         }

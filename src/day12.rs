@@ -22,19 +22,19 @@ fn main() {
         for (nx, ny) in grid.neighbors(x, y) {
             let nc = grid.get(nx, ny);
             if *nc as u32 > *c as u32 + 1 {
-                graph.remove_edge_uni(&((x, y), *c), &((nx, ny), *nc));
+                graph.remove_edge_uni(((x, y), *c), ((nx, ny), *nc));
             }
         }
     }
 
     let cost = graph
-        .get_shortest_path_length((start, 'a'), (end, 'z'))
+        .get_shortest_path_cost((start, 'a'), (end, 'z'))
         .unwrap();
 
     let min_a_cost = (0..grid.height()).fold(u64::MAX, |min, y| {
         let new_start = (start.0, y);
         let cost = graph
-            .get_shortest_path_length((new_start, 'a'), (end, 'z'))
+            .get_shortest_path_cost((new_start, 'a'), (end, 'z'))
             .unwrap();
         min.min(cost)
     });
@@ -106,3 +106,4 @@ abcccccaaaaaaaaaaaaaaaaaaaaacccccccccccccccccccccccccccccccccaaaaaa
 "
     .to_string();
 }
+

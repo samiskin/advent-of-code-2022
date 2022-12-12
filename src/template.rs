@@ -1,3 +1,8 @@
+#[allow(dead_code)]
+mod utils;
+#[allow(unused_imports)]
+use crate::utils::*;
+
 fn main() {
     let input = _get_test_input();
 
