@@ -1,10 +1,10 @@
+use std::cmp::PartialEq;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
 use std::hash::Hash;
 use std::ops::Add;
-
 
 pub struct NumIterator {
     curr: u64,
@@ -27,14 +27,22 @@ impl Iterator for NumIterator {
 
 pub fn iter_nums(lower: u64, upper: u64) -> NumIterator {
     if lower < upper {
-        NumIterator { curr: lower, step: 1, end: upper }
+        NumIterator {
+            curr: lower,
+            step: 1,
+            end: upper,
+        }
     } else {
-        NumIterator { curr: lower, step: -1, end: upper }
+        NumIterator {
+            curr: lower,
+            step: -1,
+            end: upper,
+        }
     }
 }
 
 pub fn digits(mut n: u64) -> Vec<u64> {
-    let mut result = vec!();
+    let mut result = vec![];
     for digit in (0..20).rev() {
         if !result.is_empty() || n / 10_u64.pow(digit) >= 1 || digit == 0 {
             result.push(n / 10_u64.pow(digit));
@@ -59,13 +67,19 @@ pub fn prepend_digit(leading_digit: u64, rest: u64) -> u64 {
     from_digits(&digits)
 }
 
-pub fn print_vec_multiline<T>(v: &Vec<T>) where T: std::fmt::Debug {
+pub fn print_vec_multiline<T>(v: &Vec<T>)
+where
+    T: std::fmt::Debug,
+{
     for e in v {
         println!("{:?}", e);
     }
 }
 
-pub fn vec_to_str_multiline<T>(v: &Vec<T>) -> String where T: std::fmt::Debug {
+pub fn vec_to_str_multiline<T>(v: &Vec<T>) -> String
+where
+    T: std::fmt::Debug,
+{
     let mut out = "\n".to_owned();
     for e in v {
         out = format!("{}{:?}\n", out, e);
@@ -223,6 +237,24 @@ where
     None
 }
 
+impl<T> Grid<T>
+where
+    T: Eq + Hash + Copy,
+{
+    pub fn to_graph(&self) -> Graph<((usize, usize), T)> {
+        let mut graph = Graph::new();
+        for ((x, y), t) in self.iter() {
+            let node = ((x, y), *t);
+            graph.add_node(node);
+            for (nx, ny) in self.neighbors(x, y) {
+                let nt = self.get(nx, ny);
+                graph.add_edge(node, ((nx, ny), *nt));
+            }
+        }
+        graph
+    }
+}
+
 pub struct Graph<T>
 where
     T: Eq + Hash + Copy,
@@ -230,7 +262,33 @@ where
     edges: HashMap<T, HashSet<T>>,
 }
 
-#[allow(dead_code)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct DijkstraState<'a, T>
+where
+    T: std::cmp::Eq,
+{
+    pub cost: u64,
+    pub node: &'a T,
+}
+
+impl<'a, T> PartialOrd for DijkstraState<'a, T>
+where
+    T: std::cmp::Eq,
+{
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(other.cost.cmp(&self.cost))
+    }
+}
+
+impl<'a, T> Ord for DijkstraState<'a, T>
+where
+    T: std::cmp::Eq,
+{
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
 impl<T> Graph<T>
 where
     T: Eq + Hash + Copy,
@@ -253,11 +311,59 @@ where
         edges_b.insert(a);
     }
 
-    pub fn neighbors(&self, key: &T) -> HashSet<T> {
+    pub fn add_edge_uni(&mut self, a: T, b: T) {
+        let edges_a = self.edges.entry(a).or_insert(HashSet::new());
+        edges_a.insert(b);
+    }
+
+    pub fn remove_edge(&mut self, a: &T, b: &T) {
+        if let Some(edges_a) = self.edges.get_mut(a) {
+            edges_a.remove(b);
+        };
+        if let Some(edges_b) = self.edges.get_mut(b) {
+            edges_b.remove(a);
+        };
+    }
+
+    pub fn remove_edge_uni(&mut self, a: &T, b: &T) {
+        if let Some(edges_a) = self.edges.get_mut(a) {
+            edges_a.remove(b);
+        };
+    }
+
+    pub fn neighbors(&self, key: &T) -> Option<&HashSet<T>> {
         if !self.edges.contains_key(key) {
-            return HashSet::new();
+            return None;
         }
-        return self.edges.get(key).unwrap().to_owned();
+        return Some(&self.edges.get(key).unwrap());
+    }
+
+    pub fn get_shortest_path_length(&self, start: T, end: T) -> Option<u64> {
+        let mut heap = BinaryHeap::new();
+        let mut seen = HashSet::new();
+        heap.push(DijkstraState {
+            cost: 0,
+            node: &start,
+        });
+        seen.insert(start);
+
+        while let Some(DijkstraState { cost, node }) = heap.pop() {
+            if *node == end {
+                return Some(cost);
+            }
+
+            for n in self.neighbors(node).unwrap() {
+                if !seen.contains(n) {
+                    seen.insert(*n);
+                    heap.push(DijkstraState {
+                        cost: cost + 1,
+                        node: &n,
+                    });
+                }
+            }
+        }
+
+        None
     }
 }
 
@@ -315,6 +421,17 @@ where
     }
 }
 
+impl Grid<char> {
+    pub fn from_str(grid_str: &String) -> Grid<char> {
+        let parsed = grid_str
+            .trim()
+            .split("\n")
+            .map(|s| s.chars().collect())
+            .collect::<Vec<Vec<char>>>();
+        Grid { grid: parsed }
+    }
+}
+
 impl<T> Grid<T>
 where
     T: Default + Copy,
@@ -347,7 +464,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 impl<T> Grid<T> {
     pub fn new(grid: Vec<Vec<T>>) -> Grid<T> {
         Grid { grid }
@@ -394,12 +510,7 @@ impl<T> Grid<T> {
         return neighbors;
     }
     pub fn neighbors_walk(&self, sx: usize, sy: usize) -> [Vec<(usize, usize)>; 4] {
-        let dirs: [(isize, isize); 4] = [
-            (0, 1),
-            (1, 0),
-            (0, -1),
-            (-1, 0),
-        ];
+        let dirs: [(isize, isize); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
         let mut neighbors = [vec![], vec![], vec![], vec![]];
         for (i, (dx, dy)) in dirs.iter().enumerate() {
             let (mut x, mut y) = (sx as isize + dx, sy as isize + dy);
@@ -476,7 +587,10 @@ where
 }
 
 impl<T> Eq for Grid<T> where T: PartialEq + fmt::Debug {}
-impl<T> PartialEq for Grid<T> where T: PartialEq + fmt::Debug {
+impl<T> PartialEq for Grid<T>
+where
+    T: PartialEq + fmt::Debug,
+{
     fn eq(&self, other: &Self) -> bool {
         if other.width() != self.width() || other.height() != self.height() {
             return false;
