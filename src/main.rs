@@ -11,7 +11,7 @@ fn main() {
     let parsed = input
         .trim()
         .split("\n")
-        .collect::<Vec<&str>>();
+        .collect::<Vec<_>>();
 
     // ----------- Solve -----------
 

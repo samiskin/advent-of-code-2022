@@ -395,10 +395,10 @@ where
     T: Copy,
 {
     pub fn from_points(points: Vec<((i32, i32), T)>, default: T) -> Grid<T> {
-        let mut max_x = 0;
-        let mut max_y = 0;
-        let mut min_x = 0;
-        let mut min_y = 0;
+        let mut max_x = i32::MIN;
+        let mut max_y = i32::MIN;
+        let mut min_x = i32::MAX;
+        let mut min_y = i32::MAX;
         for (point, _) in points.iter() {
             max_x = i32::max(max_x, point.0);
             max_y = i32::max(max_y, point.1);
