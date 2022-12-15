@@ -183,6 +183,40 @@ pub static ROT_90_X: Matrix = [[1, 0, 0], [0, 0, -1], [0, 1, 0]];
 pub static ROT_90_Y: Matrix = [[0, 0, 1], [0, 1, 0], [-1, 0, 0]];
 pub static ROT_90_Z: Matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]];
 
+pub fn add_interval(
+    intervals: Vec<(i64, i64)>,
+    (mut left, mut right): (i64, i64),
+) -> Vec<(i64, i64)> {
+    let mut ret = Vec::new();
+    let mut done = false;
+
+    for interval in intervals {
+        let (il, ir) = interval;
+        if ir < left - 1 {
+            ret.push(interval);
+            continue;
+        }
+        if il > right + 1 {
+            if !done {
+                ret.push((left, right));
+                done = true;
+            }
+            ret.push(interval);
+            continue;
+        }
+        if il <= left {
+            left = il;
+        }
+        if ir >= right {
+            right = ir;
+        }
+    }
+    if !done {
+        ret.push((left, right));
+    }
+    return ret;
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Ord)]
 pub struct PqState<T>
 where

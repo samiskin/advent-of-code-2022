@@ -484,6 +484,7 @@ export class PriorityQueue<T> {
   }
 }
 
+// Interperse a value of V between every element of an array
 export const intersperse = <T, V>(arr: Array<T>, separator: V) => {
   return arr.reduce((acc, el, i) => {
     acc.push(el);
@@ -492,4 +493,42 @@ export const intersperse = <T, V>(arr: Array<T>, separator: V) => {
     }
     return acc;
   }, [] as Array<T | V>);
+}
+
+// Given a sorted list of non-overlapping intervals, add the new interval to it and return the new list.
+export const addInterval = (intervals: Array<[number, number]>, [left, right]: [number, number]) => {
+  if (!intervals) {
+    return [[left, right]];
+  }
+
+  let new_intervals = [];
+  let done = false;
+  while (intervals.length > 0) {
+    let [il, ir] = intervals.shift();
+    if (ir < left - 1) {
+      new_intervals.push([il, ir]);
+      continue;
+    }
+    if (il > right + 1) {
+      if (!done) {
+        new_intervals.push([left, right]);
+        done = true;
+      }
+      new_intervals.push([il, ir]);
+      continue;
+    }
+
+    if (il <= left) {
+      left = il;
+    }
+
+    if (ir >= right) {
+      right = ir;
+    }
+  }
+  if (!done) {
+    new_intervals.push([left, right]);
+    done = true;
+  }
+  return new_intervals;
 }
