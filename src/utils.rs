@@ -293,8 +293,8 @@ pub struct Graph<T>
 where
     T: Eq + Hash + Copy,
 {
-    nodes: HashMap<T, HashSet<T>>,
-    edges: HashMap<(T, T), u64>,
+    pub nodes: HashMap<T, HashSet<T>>,
+    pub edges: HashMap<(T, T), i64>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -302,7 +302,7 @@ pub struct DijkstraState<'a, T>
 where
     T: std::cmp::Eq,
 {
-    pub cost: u64,
+    pub cost: i64,
     pub node: &'a T,
 }
 
@@ -339,12 +339,12 @@ where
         self.nodes.insert(key, HashSet::new());
     }
 
-    pub fn add_edge(&mut self, a: T, b: T, cost: u64) {
+    pub fn add_edge(&mut self, a: T, b: T, cost: i64) {
         self.add_edge_uni(a, b, cost);
         self.add_edge_uni(b, a, cost);
     }
 
-    pub fn add_edge_uni(&mut self, a: T, b: T, cost: u64) {
+    pub fn add_edge_uni(&mut self, a: T, b: T, cost: i64) {
         let nodes_a = self.nodes.entry(a).or_insert(HashSet::new());
         nodes_a.insert(b);
         let edges_a = self.edges.entry((a, b)).or_insert(cost);
@@ -370,7 +370,7 @@ where
         return Some(&self.nodes.get(key).unwrap());
     }
 
-    pub fn get_shortest_path_cost(&self, start: T, end: T) -> Option<u64> {
+    pub fn get_shortest_path_cost(&self, start: T, end: T) -> Option<i64> {
         let mut heap = BinaryHeap::new();
         let mut seen = HashSet::new();
         heap.push(DijkstraState {
@@ -408,9 +408,16 @@ where
         let mut sorted_keys = Vec::from_iter(self.nodes.keys().map(|k| *k));
         sorted_keys.sort();
         for key in sorted_keys {
-            let mut sorted_edges =
+            let mut sorted_neighbors =
                 Vec::from_iter(self.nodes.get(&key).unwrap().into_iter().map(|t| *t));
-            sorted_edges.sort();
+            sorted_neighbors.sort();
+            let sorted_edges = sorted_neighbors
+                .iter()
+                .map(|n| {
+                    let edge_cost = self.edges.get(&(key, *n)).unwrap_or(&-1);
+                    return (n, edge_cost);
+                })
+                .collect::<Vec<_>>();
             write!(f, "\n\x1b[31m{:?}\x1b[0m -> {:?}", key, sorted_edges).unwrap();
         }
         Ok(())

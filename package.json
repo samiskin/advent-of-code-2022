@@ -5,7 +5,7 @@
   "main": "out.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "nodemon -e ts --watch ts --exec \"tsc && node dist/main.js\""
+    "watch": "nodemon -e ts --watch ts --exec \"tsc && time node dist/main.js\""
   },
   "repository": {
     "type": "git",

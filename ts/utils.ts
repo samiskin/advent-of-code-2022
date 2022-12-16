@@ -282,6 +282,7 @@ export class Graph<T> {
     this.addNode(b);
     const hashA = this.hasher(a);
     const hashB = this.hasher(b);
+
     this.nodes[hashA].neighbors.add(hashB);
     this.edges[Graph.hashEdge(hashA, hashB)] = cost;
   }
@@ -306,6 +307,14 @@ export class Graph<T> {
     const hashed = this.hasher(n);
     if (this.nodes[hashed]) {
       return Array.from(this.nodes[hashed].neighbors).map((h) => this.nodes[h].val);
+    }
+    return [];
+  }
+
+  getNeighborsWithCost(n: T): Array<[T, number]> {
+    const hashed = this.hasher(n);
+    if (this.nodes[hashed]) {
+      return Array.from(this.nodes[hashed].neighbors).map((h) => [this.nodes[h].val, this.edges[Graph.hashEdge(this.hasher(n), h)]]);
     }
     return [];
   }
