@@ -338,6 +338,11 @@ where
     pub fn add_node(&mut self, key: T) {
         self.nodes.insert(key, HashSet::new());
     }
+    pub fn try_add_node(&mut self, key: T) {
+        if !self.nodes.contains_key(&key) {
+            self.nodes.insert(key, HashSet::new());
+        }
+    }
 
     pub fn add_edge(&mut self, a: T, b: T, cost: i64) {
         self.add_edge_uni(a, b, cost);
