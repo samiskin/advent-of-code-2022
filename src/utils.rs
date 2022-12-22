@@ -440,16 +440,16 @@ impl<T> Grid<T>
 where
     T: Copy,
 {
-    pub fn from_points(points: Vec<((i32, i32), T)>, default: T) -> Grid<T> {
-        let mut max_x = i32::MIN;
-        let mut max_y = i32::MIN;
-        let mut min_x = i32::MAX;
-        let mut min_y = i32::MAX;
+    pub fn from_points(points: Vec<((isize, isize), T)>, default: T) -> Grid<T> {
+        let mut max_x = isize::MIN;
+        let mut max_y = isize::MIN;
+        let mut min_x = isize::MAX;
+        let mut min_y = isize::MAX;
         for (point, _) in points.iter() {
-            max_x = i32::max(max_x, point.0);
-            max_y = i32::max(max_y, point.1);
-            min_x = i32::min(min_x, point.0);
-            min_y = i32::min(min_y, point.1);
+            max_x = isize::max(max_x, point.0);
+            max_y = isize::max(max_y, point.1);
+            min_x = isize::min(min_x, point.0);
+            min_y = isize::min(min_y, point.1);
         }
 
         let mut grid = Grid {
@@ -467,13 +467,20 @@ where
 }
 
 impl Grid<char> {
-    pub fn from_str(grid_str: &String) -> Grid<char> {
-        let parsed = grid_str
-            .trim()
+    pub fn from_str(grid_str: &str) -> Grid<char> {
+        let points = grid_str
             .split("\n")
-            .map(|s| s.chars().collect())
-            .collect::<Vec<Vec<char>>>();
-        Grid { grid: parsed }
+            .enumerate()
+            .flat_map(|(y, s)| {
+                s.chars()
+                    .enumerate()
+                    .map(move |(x, c)| ((x as isize, y as isize), c))
+            })
+            .collect::<Vec<((isize, isize), char)>>();
+        Grid::from_points(points, ' ')
+    }
+    pub fn from_string(grid_str: &String) -> Grid<char> {
+        return Grid::from_str(grid_str.as_str());
     }
 }
 
@@ -484,7 +491,7 @@ where
     pub fn rotated(&self) -> Grid<T> {
         Grid::from_points(
             self.iter()
-                .map(|((x, y), t)| ((y as i32, x as i32), *t))
+                .map(|((x, y), t)| ((y as isize, x as isize), *t))
                 .collect(),
             T::default(),
         )
@@ -493,7 +500,7 @@ where
     pub fn flip_x(&self) -> Grid<T> {
         Grid::from_points(
             self.iter()
-                .map(|((x, y), t)| ((-(x as i32), y as i32), *t))
+                .map(|((x, y), t)| ((-(x as isize), y as isize), *t))
                 .collect(),
             T::default(),
         )
@@ -502,7 +509,7 @@ where
     pub fn flip_y(&self) -> Grid<T> {
         Grid::from_points(
             self.iter()
-                .map(|((x, y), t)| ((x as i32, -(y as i32)), *t))
+                .map(|((x, y), t)| ((x as isize, -(y as isize)), *t))
                 .collect(),
             T::default(),
         )
@@ -583,6 +590,23 @@ impl<T> Grid<T> {
         }
         return neighbors;
     }
+
+    pub fn wrapped(&self, (mut x, mut y): (isize, isize)) -> (usize, usize) {
+        if x < 0 {
+            x = self.width() as isize - 1;
+        }
+        if y < 0 {
+            y = self.height() as isize - 1;
+        }
+        if x >= self.width() as isize {
+            x = 0;
+        }
+        if y >= self.height() as isize {
+            y = 0;
+        }
+        return (x as usize, y as usize);
+    }
+
     pub fn iter(&self) -> GridIter<'_, T> {
         GridIter { grid: self, pos: 0 }
     }
